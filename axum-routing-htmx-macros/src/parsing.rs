@@ -1,10 +1,5 @@
-use core::panic;
-
 use quote::ToTokens;
-use syn::{
-    token::{Brace, Star},
-    Attribute, Expr, ExprClosure, Lit, LitBool, LitInt,
-};
+use syn::{token::Star, LitInt};
 
 use super::*;
 
@@ -125,17 +120,6 @@ impl PathParam {
     }
 }
 
-pub struct OapiOptions {
-    pub summary: Option<(Ident, LitStr)>,
-    pub description: Option<(Ident, LitStr)>,
-    pub id: Option<(Ident, LitStr)>,
-    pub hidden: Option<(Ident, LitBool)>,
-    pub tags: Option<(Ident, StrArray)>,
-    pub security: Option<(Ident, Security)>,
-    pub responses: Option<(Ident, Responses)>,
-    pub transform: Option<(Ident, ExprClosure)>,
-}
-
 pub struct Security(pub Vec<(LitStr, StrArray)>);
 impl Parse for Security {
     fn parse(input: ParseStream) -> syn::Result<Self> {
@@ -240,167 +224,28 @@ impl ToString for StrArray {
     }
 }
 
-impl Parse for OapiOptions {
-    fn parse(input: ParseStream) -> syn::Result<Self> {
-        let mut this = Self {
-            summary: None,
-            description: None,
-            id: None,
-            hidden: None,
-            tags: None,
-            security: None,
-            responses: None,
-            transform: None,
-        };
-
-        while !input.is_empty() {
-            let ident = input.parse::<Ident>()?;
-            let _ = input.parse::<Token![:]>()?;
-            match ident.to_string().as_str() {
-                "summary" => this.summary = Some((ident, input.parse()?)),
-                "description" => this.description = Some((ident, input.parse()?)),
-                "id" => this.id = Some((ident, input.parse()?)),
-                "hidden" => this.hidden = Some((ident, input.parse()?)),
-                "tags" => this.tags = Some((ident, input.parse()?)),
-                "security" => this.security = Some((ident, input.parse()?)),
-                "responses" => this.responses = Some((ident, input.parse()?)),
-                "transform" => this.transform = Some((ident, input.parse()?)),
-                _ => {
-                    return Err(syn::Error::new(
-                        ident.span(),
-                        "unexpected field, expected one of (summary, description, id, hidden, tags, security, responses, transform)",
-                    ))
-                }
-            }
-            let _ = input.parse::<Token![,]>().ok();
-        }
-
-        Ok(this)
-    }
-}
-
-impl OapiOptions {
-    pub fn merge_with_fn(&mut self, function: &ItemFn) {
-        if self.description.is_none() {
-            self.description = doc_iter(&function.attrs)
-                .skip(2)
-                .map(|item| item.value())
-                .reduce(|mut acc, item| {
-                    acc.push('\n');
-                    acc.push_str(&item);
-                    acc
-                })
-                .map(|item| (parse_quote!(description), parse_quote!(#item)))
-        }
-        if self.summary.is_none() {
-            self.summary = doc_iter(&function.attrs)
-                .next()
-                .map(|item| (parse_quote!(summary), item.clone()))
-        }
-        if self.id.is_none() {
-            let id = &function.sig.ident;
-            self.id = Some((parse_quote!(id), LitStr::new(&id.to_string(), id.span())));
-        }
-    }
-}
-
-fn doc_iter(attrs: &[Attribute]) -> impl Iterator<Item = &LitStr> + '_ {
-    attrs
-        .iter()
-        .filter(|attr| attr.path().is_ident("doc"))
-        .map(|attr| {
-            let Meta::NameValue(meta) = &attr.meta else {
-                panic!("doc attribute is not a name-value attribute");
-            };
-            let Expr::Lit(lit) = &meta.value else {
-                panic!("doc attribute is not a string literal");
-            };
-            let Lit::Str(lit_str) = &lit.lit else {
-                panic!("doc attribute is not a string literal");
-            };
-            lit_str
-        })
-}
-
 pub struct Route {
-    pub method: Method,
     pub path_params: Vec<(Slash, PathParam)>,
     pub query_params: Vec<Ident>,
     pub state: Option<Type>,
     pub route_lit: LitStr,
-    pub oapi_options: Option<OapiOptions>,
 }
 
 impl Parse for Route {
     fn parse(input: ParseStream) -> syn::Result<Self> {
-        let method = input.parse::<Method>()?;
         let route_lit = input.parse::<LitStr>()?;
         let route_parser = RouteParser::new(route_lit.clone())?;
         let state = match input.parse::<kw::with>() {
             Ok(_) => Some(input.parse::<Type>()?),
             Err(_) => None,
         };
-        let oapi_options = input
-            .peek(Brace)
-            .then(|| {
-                let inner;
-                braced!(inner in input);
-                inner.parse::<OapiOptions>()
-            })
-            .transpose()?;
 
         Ok(Route {
-            method,
             path_params: route_parser.path_params,
             query_params: route_parser.query_params,
             state,
             route_lit,
-            oapi_options,
         })
-    }
-}
-
-pub enum Method {
-    Get(Span),
-    Post(Span),
-    Put(Span),
-    Delete(Span),
-    Head(Span),
-    Connect(Span),
-    Options(Span),
-    Trace(Span),
-}
-
-impl Parse for Method {
-    fn parse(input: ParseStream) -> syn::Result<Self> {
-        let ident = input.parse::<Ident>()?;
-        match ident.to_string().to_uppercase().as_str() {
-            "GET" => Ok(Self::Get(ident.span())),
-            "POST" => Ok(Self::Post(ident.span())),
-            "PUT" => Ok(Self::Put(ident.span())),
-            "DELETE" => Ok(Self::Delete(ident.span())),
-            "HEAD" => Ok(Self::Head(ident.span())),
-            "CONNECT" => Ok(Self::Connect(ident.span())),
-            "OPTIONS" => Ok(Self::Options(ident.span())),
-            "TRACE" => Ok(Self::Trace(ident.span())),
-            _ => Err(input
-                .error("expected one of (GET, POST, PUT, DELETE, HEAD, CONNECT, OPTIONS, TRACE)")),
-        }
-    }
-}
-
-impl Method {
-    pub fn to_axum_method_name(&self) -> Ident {
-        match self {
-            Self::Get(span) => Ident::new("get", *span),
-            Self::Post(span) => Ident::new("post", *span),
-            Self::Put(span) => Ident::new("put", *span),
-            Self::Delete(span) => Ident::new("delete", *span),
-            Self::Head(span) => Ident::new("head", *span),
-            Self::Connect(span) => Ident::new("connect", *span),
-            Self::Options(span) => Ident::new("options", *span),
-            Self::Trace(span) => Ident::new("trace", *span),
-        }
     }
 }
 

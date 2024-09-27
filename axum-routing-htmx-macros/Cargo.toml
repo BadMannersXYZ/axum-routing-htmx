@@ -1,13 +1,11 @@
 [package]
-name = "axum-typed-routing-macros"
-version = "0.2.0"
+name = "axum-routing-htmx-macros"
+version = "0.1.0"
 edition = "2021"
 license = "MIT OR Apache-2.0"
-keywords = ["axum", "routing", "handler", "typed", "macro"]
+keywords = ["axum", "routing", "htmx", "handler", "typed", "macro"]
 categories = ["web-programming"]
-description = "Typed routing macros for axum"
-homepage = "https://github.com/jvdwrf/axum-typed-routing"
-repository = "https://github.com/jvdwrf/axum-typed-routing"
+description = "Typed routing macros for HTMX on axum"
 readme = "../README.md"
 
 [dependencies]
@@ -17,7 +15,6 @@ proc-macro2 = "1"
 
 [dev-dependencies]
 axum = { version = "0.7", features = [] }
-aide = { version = "0.13", features = ["axum"] }
 serde = { version = "1.0", features = ["derive"] }
 schemars = "0.8"
 
