@@ -3,10 +3,11 @@ name = "axum-routing-htmx"
 version = "0.1.0"
 edition = "2021"
 license = "MIT OR Apache-2.0"
-keywords = ["axum", "routing", "htmx", "handler", "typed", "macro"]
+keywords = ["axum", "routing", "htmx", "handler", "typed"]
 categories = ["web-programming"]
 description = "Typed routing macros for HTMX on axum"
 readme = "../README.md"
+repository = "https://github.com/BadMannersXYZ/axum-routing-htmx"
 
 [dependencies]
 axum = "0.7"

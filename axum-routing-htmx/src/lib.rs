@@ -1,4 +1,3 @@
-#![doc = include_str!("../../README.md")]
 //!
 //! ## Basic usage
 //! The following example demonstrates the basic usage of the library.
