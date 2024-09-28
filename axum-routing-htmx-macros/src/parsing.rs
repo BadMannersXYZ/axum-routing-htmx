@@ -139,8 +139,8 @@ impl Parse for Security {
     }
 }
 
-impl ToString for Security {
-    fn to_string(&self) -> String {
+impl std::fmt::Display for Security {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let mut s = String::new();
         s.push('{');
         for (i, (scheme, scopes)) in self.0.iter().enumerate() {
@@ -152,7 +152,7 @@ impl ToString for Security {
             s.push_str(&scopes.to_string());
         }
         s.push('}');
-        s
+        f.write_str(&s)
     }
 }
 
@@ -175,8 +175,8 @@ impl Parse for Responses {
     }
 }
 
-impl ToString for Responses {
-    fn to_string(&self) -> String {
+impl std::fmt::Display for Responses {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let mut s = String::new();
         s.push('{');
         for (i, (status, ty)) in self.0.iter().enumerate() {
@@ -188,7 +188,7 @@ impl ToString for Responses {
             s.push_str(&ty.to_token_stream().to_string());
         }
         s.push('}');
-        s
+        f.write_str(&s)
     }
 }
 
@@ -207,8 +207,8 @@ impl Parse for StrArray {
     }
 }
 
-impl ToString for StrArray {
-    fn to_string(&self) -> String {
+impl std::fmt::Display for StrArray {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let mut s = String::new();
         s.push('[');
         for (i, lit) in self.0.iter().enumerate() {
@@ -220,7 +220,7 @@ impl ToString for StrArray {
             s.push('"');
         }
         s.push(']');
-        s
+        f.write_str(&s)
     }
 }
 

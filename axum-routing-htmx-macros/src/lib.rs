@@ -120,7 +120,7 @@ fn _route(
     // Generate the code
     Ok(quote! {
         #[allow(non_camel_case_types)]
-        struct #htmx_struct<S = ()> {
+        #vis struct #htmx_struct<S> {
             pub htmx_method: ::axum_routing_htmx::HtmxMethod,
             pub axum_path: &'static str,
             pub method_router: ::axum::routing::MethodRouter<S>,

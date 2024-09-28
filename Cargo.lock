@@ -114,7 +114,7 @@ dependencies = [
 
 [[package]]
 name = "axum-routing-htmx"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "axum",
  "axum-macros",
@@ -130,7 +130,7 @@ dependencies = [
 
 [[package]]
 name = "axum-routing-htmx-macros"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "axum",
  "proc-macro2",

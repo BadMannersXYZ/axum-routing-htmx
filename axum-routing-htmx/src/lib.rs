@@ -33,6 +33,7 @@ pub trait HtmxHandler<S> {
 }
 
 #[non_exhaustive]
+#[derive(Debug, PartialEq, Eq)]
 pub enum HtmxMethod {
     Get,
     Post,
