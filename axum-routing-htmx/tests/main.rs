@@ -53,12 +53,12 @@ async fn foo_bar() {}
 #[tokio::test]
 async fn test_normal() {
     let router: axum::Router = axum::Router::new()
-        .htmx_route(generic_handler_with_complex_options::<u32>)
-        .htmx_route(one)
+        .htmx_route(generic_handler_with_complex_options::<u32>())
+        .htmx_route(one())
         .with_state("state".to_string())
-        .htmx_route(two)
-        .htmx_route(three)
-        .htmx_route(four);
+        .htmx_route(two())
+        .htmx_route(three())
+        .htmx_route(four());
 
     let server = TestServer::new(router).unwrap();
 
@@ -104,7 +104,7 @@ async fn root() {}
 
 #[tokio::test]
 async fn test_wildcard() {
-    let router: axum::Router = axum::Router::new().htmx_route(wildcard_capture);
+    let router: axum::Router = axum::Router::new().htmx_route(wildcard_capture());
 
     let server = TestServer::new(router).unwrap();
 

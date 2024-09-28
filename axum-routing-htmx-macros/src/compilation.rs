@@ -39,7 +39,7 @@ impl CompiledRoute {
         path
     }
 
-    pub fn to_format_path_string(&self, include_query_params: bool) -> String {
+    pub fn to_format_path_string(&self) -> String {
         let mut path = String::new();
 
         for (_slash, param) in &self.path_params {
@@ -55,16 +55,14 @@ impl CompiledRoute {
             }
         }
 
-        if include_query_params {
-            for (i, param) in self.query_params.iter().enumerate() {
-                if i == 0 {
-                    path.push('?');
-                } else {
-                    path.push('&');
-                }
-                path.push_str(&param.0.to_string());
-                path.push_str("={}");
+        for (i, param) in self.query_params.iter().enumerate() {
+            if i == 0 {
+                path.push('?');
+            } else {
+                path.push('&');
             }
+            path.push_str(&param.0.to_string());
+            path.push_str("={}");
         }
 
         path
@@ -197,7 +195,7 @@ impl CompiledRoute {
     }
 
     /// The arguments not used in the route.
-    /// Map the identifier to `_arg_{i}: Type`.
+    /// Map the identifier to `__arg_{i}: Type`.
     pub fn remaining_pattypes_numbered(
         &self,
         args: &Punctuated<FnArg, Comma>,
@@ -223,7 +221,7 @@ impl CompiledRoute {
                     }
 
                     let mut new_pat_type = pat_type.clone();
-                    let ident = format_ident!("_arg_{}", i);
+                    let ident = format_ident!("__arg_{}", i);
                     new_pat_type.pat = Box::new(parse_quote!(#ident));
                     Some(new_pat_type)
                 } else {

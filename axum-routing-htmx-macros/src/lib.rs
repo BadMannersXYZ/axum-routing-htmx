@@ -96,7 +96,7 @@ fn _route(
     let query_params_struct = route.query_params_struct();
     let state_type = &route.state;
     let axum_path = route.to_axum_path_string();
-    let format_path = route.to_format_path_string(enum_verb == "Get");
+    let format_path = route.to_format_path_string();
     let remaining_numbered_pats = route.remaining_pattypes_numbered(&function.sig.inputs);
     let extracted_idents = route.extracted_idents();
     let remaining_numbered_idents = remaining_numbered_pats.iter().map(|pat_type| &pat_type.pat);
@@ -115,16 +115,42 @@ fn _route(
         .filter(|attr| attr.path().is_ident("doc"));
     let enum_method = format_ident!("{}", enum_verb);
     let http_method = format_ident!("{}", axum_method);
+    let htmx_struct = format_ident!("__HtmxHandler_{}", fn_name);
 
     // Generate the code
     Ok(quote! {
+        #[allow(non_camel_case_types)]
+        struct #htmx_struct<S = ()> {
+            pub htmx_method: ::axum_routing_htmx::HtmxMethod,
+            pub axum_path: &'static str,
+            pub method_router: ::axum::routing::MethodRouter<S>,
+        }
+
+        impl<S> #htmx_struct<S> {
+            fn htmx_path(
+                &self,
+                #(#extracted_idents: impl ::std::fmt::Display,)*
+            ) -> String {
+                format!(#format_path, #(#extracted_idents,)*)
+            }
+        }
+
+        impl<S> ::axum_routing_htmx::HtmxHandler<S> for #htmx_struct<S> {
+            fn axum_path(&self) -> &'static str {
+                self.axum_path
+            }
+            fn method_router(&self) -> ::axum::routing::MethodRouter<S> {
+                self.method_router.clone()
+            }
+        }
+
         #(#fn_docs)*
         #route_docs
-        #vis fn #fn_name #impl_generics() -> ::axum_routing_htmx::HtmxHandler<#state_type> #where_clause {
+        #vis fn #fn_name #impl_generics() -> #htmx_struct<#state_type> #where_clause {
 
             #query_params_struct
 
-            #asyncness fn _inner #impl_generics(
+            #asyncness fn __inner #impl_generics(
                 #path_extractor
                 #query_extractor
                 #remaining_numbered_pats
@@ -134,11 +160,10 @@ fn _route(
                 #fn_name #ty_generics(#(#extracted_idents,)* #(#remaining_numbered_idents,)* ).await
             }
 
-            ::axum_routing_htmx::HtmxHandler {
+            #htmx_struct {
                 htmx_method: ::axum_routing_htmx::HtmxMethod::#enum_method,
-                format_path: #format_path,
                 axum_path: #axum_path,
-                method_router: ::axum::routing::#http_method(_inner #ty_generics)
+                method_router: ::axum::routing::#http_method(__inner #ty_generics)
             }
         }
     })

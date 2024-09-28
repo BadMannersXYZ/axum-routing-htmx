@@ -2,6 +2,27 @@
 use axum::extract::State;
 use axum_routing_htmx::{hx_get, hx_post, HtmxRouter};
 
+struct FooBar<S = ()> {
+    pub htmx_method: ::axum_routing_htmx::HtmxMethod,
+    pub axum_path: &'static str,
+    pub method_router: ::axum::routing::MethodRouter<S>,
+}
+
+impl FooBar {
+    fn htmx_path() -> String {
+        format!("/title")
+    }
+}
+
+impl<S> ::axum_routing_htmx::HtmxHandler<S> for FooBar<S> {
+    fn axum_path(&self) -> &'static str {
+        self.axum_path
+    }
+    fn method_router(&self) -> ::axum::routing::MethodRouter<S> {
+        self.method_router.clone()
+    }
+}
+
 #[hx_get("/title")]
 async fn title_handler(State(state): State<String>) -> String {
     format!("Hello from {state}!")
@@ -28,16 +49,16 @@ async fn index_handler() -> String {
             </body>
         </html>",
         title.htmx_method,
-        title.htmx_path(&[] as &[&str; 0]),
+        title.htmx_path(),
         button.htmx_method,
-        button.htmx_path(&[1]),
+        button.htmx_path(1),
     )
 }
 
 fn main() {
     let router: axum::Router = axum::Router::new()
-        .htmx_route(title_handler)
+        .htmx_route(title_handler())
         .with_state("axum-routing-htmx".to_string())
-        .htmx_route(index_handler)
-        .htmx_route(button_handler);
+        .htmx_route(button_handler())
+        .htmx_route(index_handler());
 }

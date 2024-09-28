@@ -20,22 +20,17 @@
 use std::fmt::Display;
 
 use axum::routing::MethodRouter;
-use dyn_fmt::AsStrFormatExt;
 
-pub struct HtmxHandler<S = ()> {
-    pub htmx_method: HtmxMethod,
-    pub format_path: &'static str,
-    pub axum_path: &'static str,
-    pub method_router: MethodRouter<S>,
-}
+// pub struct HtmxHandlerStruct<S = ()> {
+//     pub htmx_method: HtmxMethod,
+//     pub axum_path: &'static str,
+//     pub method_router: MethodRouter<S>,
+//     pub format_path: &'static str,
+// }
 
-impl<S> HtmxHandler<S> {
-    pub fn htmx_path<'a, T: Display + ?Sized + 'a>(
-        &self,
-        args: impl IntoIterator<Item = &'a T> + Clone,
-    ) -> String {
-        self.format_path.format(args)
-    }
+pub trait HtmxHandler<S> {
+    fn axum_path(&self) -> &'static str;
+    fn method_router(&self) -> MethodRouter<S>;
 }
 
 #[non_exhaustive]
@@ -59,12 +54,7 @@ impl Display for HtmxMethod {
     }
 }
 
-type TypedHandler<S = ()> = fn() -> HtmxHandler<S>;
-pub use axum_routing_htmx_macros::hx_delete;
-pub use axum_routing_htmx_macros::hx_get;
-pub use axum_routing_htmx_macros::hx_patch;
-pub use axum_routing_htmx_macros::hx_post;
-pub use axum_routing_htmx_macros::hx_put;
+pub use axum_routing_htmx_macros::{hx_delete, hx_get, hx_patch, hx_post, hx_put};
 
 /// A trait that allows typed routes, created with the `hx_` macros to
 /// be added to an axum router.
@@ -75,7 +65,7 @@ pub trait HtmxRouter: Sized {
     /// Add an HTMX route to the router.
     ///
     /// Typed handlers are functions that return [`HtmxHandler`].
-    fn htmx_route(self, handler: TypedHandler<Self::State>) -> Self;
+    fn htmx_route(self, handler: impl HtmxHandler<Self::State>) -> Self;
 }
 
 impl<S> HtmxRouter for axum::Router<S>
@@ -84,8 +74,7 @@ where
 {
     type State = S;
 
-    fn htmx_route(self, handler: TypedHandler<Self::State>) -> Self {
-        let handler = handler();
-        self.route(handler.axum_path, handler.method_router)
+    fn htmx_route(self, handler: impl HtmxHandler<Self::State>) -> Self {
+        self.route(handler.axum_path(), handler.method_router())
     }
 }
