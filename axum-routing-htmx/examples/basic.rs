@@ -2,27 +2,6 @@
 use axum::extract::State;
 use axum_routing_htmx::{hx_get, hx_post, HtmxRouter};
 
-struct FooBar<S = ()> {
-    pub htmx_method: ::axum_routing_htmx::HtmxMethod,
-    pub axum_path: &'static str,
-    pub method_router: ::axum::routing::MethodRouter<S>,
-}
-
-impl FooBar {
-    fn htmx_path() -> String {
-        format!("/title")
-    }
-}
-
-impl<S> ::axum_routing_htmx::HtmxHandler<S> for FooBar<S> {
-    fn axum_path(&self) -> &'static str {
-        self.axum_path
-    }
-    fn method_router(&self) -> ::axum::routing::MethodRouter<S> {
-        self.method_router.clone()
-    }
-}
-
 #[hx_get("/title")]
 async fn title_handler(State(state): State<String>) -> String {
     format!("Hello from {state}!")

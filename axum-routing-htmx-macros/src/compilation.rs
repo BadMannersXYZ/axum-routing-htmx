@@ -30,10 +30,6 @@ impl CompiledRoute {
                 }
                 PathParam::Static(lit) => path.push_str(&lit.value()),
             }
-            // if colon.is_some() {
-            //     path.push(':');
-            // }
-            // path.push_str(&ident.value());
         }
 
         path

@@ -88,7 +88,10 @@ async fn test_normal() {
     response.assert_text("Hello, 123 - 321 - John!");
 
     let handler = generic_handler_with_complex_options::<u32>();
-    assert_eq!(handler.axum_path, "/hello/:id");
+    assert_eq!(
+        axum_routing_htmx::HtmxHandler::axum_router(handler).0,
+        "/hello/:id"
+    );
 }
 
 #[hx_get("/*")]

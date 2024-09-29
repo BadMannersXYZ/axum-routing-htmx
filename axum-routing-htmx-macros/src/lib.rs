@@ -32,7 +32,7 @@ A macro that generates HTMX-compatible statically-typed ", $enum_verb, " routes 
     specified, the state type is guessed based on the parameters of the handler.
 
 # Example
-```ignore
+```
 use axum::extract::{State, Json};
 use axum_routing_htmx::", stringify!($method), ";
 
@@ -121,12 +121,15 @@ fn _route(
     Ok(quote! {
         #[allow(non_camel_case_types)]
         #vis struct #htmx_struct<S> {
+            /// Which HTMX method this corresponds with. The `Display` interface
+            /// can be used to generate the HTML attribute name.
             pub htmx_method: ::axum_routing_htmx::HtmxMethod,
-            pub axum_path: &'static str,
+            /// The MethodRouter that must be consumed by axum.
             pub method_router: ::axum::routing::MethodRouter<S>,
         }
 
         impl<S> #htmx_struct<S> {
+            /// Generates a path according the expected fields of the handler.
             fn htmx_path(
                 &self,
                 #(#extracted_idents: impl ::std::fmt::Display,)*
@@ -136,11 +139,8 @@ fn _route(
         }
 
         impl<S> ::axum_routing_htmx::HtmxHandler<S> for #htmx_struct<S> {
-            fn axum_path(&self) -> &'static str {
-                self.axum_path
-            }
-            fn method_router(&self) -> ::axum::routing::MethodRouter<S> {
-                self.method_router.clone()
+            fn axum_router(self) -> (&'static str, ::axum::routing::MethodRouter<S>) {
+                (#axum_path, self.method_router)
             }
         }
 
@@ -162,7 +162,6 @@ fn _route(
 
             #htmx_struct {
                 htmx_method: ::axum_routing_htmx::HtmxMethod::#enum_method,
-                axum_path: #axum_path,
                 method_router: ::axum::routing::#http_method(__inner #ty_generics)
             }
         }

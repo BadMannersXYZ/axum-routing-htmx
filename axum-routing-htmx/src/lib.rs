@@ -20,20 +20,14 @@ use std::fmt::Display;
 
 use axum::routing::MethodRouter;
 
-// pub struct HtmxHandlerStruct<S = ()> {
-//     pub htmx_method: HtmxMethod,
-//     pub axum_path: &'static str,
-//     pub method_router: MethodRouter<S>,
-//     pub format_path: &'static str,
-// }
-
+/// The trait expected by the Router to add HTMX routes.
 pub trait HtmxHandler<S> {
-    fn axum_path(&self) -> &'static str;
-    fn method_router(&self) -> MethodRouter<S>;
+    fn axum_router(self) -> (&'static str, MethodRouter<S>);
 }
 
 #[non_exhaustive]
 #[derive(Debug, PartialEq, Eq)]
+/// The HTTP verbs supported by HTMX.
 pub enum HtmxMethod {
     Get,
     Post,
@@ -75,6 +69,7 @@ where
     type State = S;
 
     fn htmx_route(self, handler: impl HtmxHandler<Self::State>) -> Self {
-        self.route(handler.axum_path(), handler.method_router())
+        let (path, method_router) = handler.axum_router();
+        self.route(path, method_router)
     }
 }
