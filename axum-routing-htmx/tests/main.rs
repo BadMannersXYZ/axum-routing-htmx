@@ -89,6 +89,11 @@ async fn test_normal() {
 
     let handler = generic_handler_with_complex_options::<u32>();
     assert_eq!(
+        handler.htmx_path(123, 321, "John"),
+        "/hello/123?user_id=321&name=John"
+    );
+    assert_eq!(handler.htmx_method.to_string(), "hx-get");
+    assert_eq!(
         axum_routing_htmx::HtmxHandler::axum_router(handler).0,
         "/hello/:id"
     );

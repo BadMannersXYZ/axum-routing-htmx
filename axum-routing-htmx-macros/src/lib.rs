@@ -129,7 +129,7 @@ fn _route(
         }
 
         impl<S> #htmx_struct<S> {
-            /// Generates a path according the expected fields of the handler.
+            /// Generates a path according to the expected fields of the handler.
             fn htmx_path(
                 &self,
                 #(#extracted_idents: impl ::std::fmt::Display,)*
