@@ -1,5 +1,9 @@
 #![allow(unused)]
-use axum::extract::State;
+use axum::{
+    extract::State,
+    response::{Html, IntoResponse},
+    routing::get,
+};
 use axum_routing_htmx::{hx_get, hx_post, HtmxRouter};
 
 #[hx_get("/title")]
@@ -12,11 +16,10 @@ async fn button_handler(id: u32) -> String {
     format!("You clicked button #{id}!")
 }
 
-#[hx_get("/")]
-async fn index_handler() -> String {
+async fn index_handler() -> impl IntoResponse {
     let title = title_handler();
     let button = button_handler();
-    format!(
+    Html(format!(
         "<html>
             <head>
                 <meta charset=\"utf-8\" />
@@ -27,11 +30,11 @@ async fn index_handler() -> String {
                 <button {}=\"{}\" id=\"button-1\">Click me!</button>
             </body>
         </html>",
-        title.htmx_method,
+        title.htmx_method(),
         title.htmx_path(),
-        button.htmx_method,
+        button.htmx_method(),
         button.htmx_path(1),
-    )
+    ))
 }
 
 fn main() {
@@ -39,5 +42,5 @@ fn main() {
         .htmx_route(title_handler())
         .with_state("axum-routing-htmx".to_string())
         .htmx_route(button_handler())
-        .htmx_route(index_handler());
+        .route("/", get(index_handler));
 }

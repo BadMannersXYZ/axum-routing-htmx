@@ -121,11 +121,8 @@ fn _route(
     Ok(quote! {
         #[allow(non_camel_case_types)]
         #vis struct #htmx_struct<S> {
-            /// Which HTMX method this corresponds with. The `Display` interface
-            /// can be used to generate the HTML attribute name.
-            pub htmx_method: ::axum_routing_htmx::HtmxMethod,
             /// The MethodRouter that must be consumed by axum.
-            pub method_router: ::axum::routing::MethodRouter<S>,
+            method_router: ::axum::routing::MethodRouter<S>,
         }
 
         impl<S> #htmx_struct<S> {
@@ -135,6 +132,12 @@ fn _route(
                 #(#extracted_idents: impl ::std::fmt::Display,)*
             ) -> String {
                 format!(#format_path, #(#extracted_idents,)*)
+            }
+
+            /// Which HTMX method this corresponds with. The `Display` interface
+            /// can be used to generate the HTML attribute name.
+            fn htmx_method(&self) -> ::axum_routing_htmx::HtmxMethod {
+                ::axum_routing_htmx::HtmxMethod::#enum_method
             }
         }
 
@@ -161,7 +164,6 @@ fn _route(
             }
 
             #htmx_struct {
-                htmx_method: ::axum_routing_htmx::HtmxMethod::#enum_method,
                 method_router: ::axum::routing::#http_method(__inner #ty_generics)
             }
         }

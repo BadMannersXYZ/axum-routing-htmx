@@ -54,7 +54,7 @@ pub use axum_routing_htmx_macros::{hx_delete, hx_get, hx_patch, hx_post, hx_put}
 /// be added to an axum router.
 pub trait HtmxRouter: Sized {
     /// The state type of the router.
-    type State: Clone + Send + Sync + 'static;
+    type State: Send + Sync + Clone + 'static;
 
     /// Add an HTMX route to the router.
     ///
